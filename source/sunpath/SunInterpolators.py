@@ -215,8 +215,8 @@ class MakeInterpolation:
                 elif im.kernel == 'gaussian-scipy':
                     self.etaInterpolated = interpolate.Rbf(
                         points[:, 0], points[:, 1], points[:, 2], values,
-                        norm=lambda ra, rb: ra.dot(rb) - 1.,
-                        function=lambda s, r: math.exp(r/s.epsilon ** 2),  # check
+                        norm=lambda ra, rb: np.dot(ra, rb) - 1.,
+                        function=lambda s, r: np.exp(r/s.epsilon**2),
                         epsilon=im.sigma
                     )
                     self.interpolationFormat = InterpolationFormat.f_xyz

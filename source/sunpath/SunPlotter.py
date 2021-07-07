@@ -10,30 +10,14 @@ from matplotlib.ticker import (MultipleLocator, AutoMinorLocator)
 mpl.rcParams['font.size'] = 7
 
 
-def draw_pie(dist, xpos, ypos, size, ax=None):
-    angles = np.linspace(2*np.pi*0, 2*np.pi*dist)
-    x = [0] + np.cos(angles).tolist()
-    y = [0] + np.sin(angles).tolist()
-    xy = np.column_stack([x, y])
-    ax.scatter([xpos], [ypos], marker=xy, s=size, c="#000000", alpha=0.5, edgecolors='none')
-
-
-def draw_box(dist, xpos, ypos, size, ax=None):
-    y0 = 2
-    xy = [[1, -y0], [1, y0], [-1, y0], [-1, -y0]]
-    ax.scatter([xpos], [ypos], marker=xy, s=size, c="#cccccc", alpha=1, edgecolors='none', zorder=5)
-    y = y0*(-1 + 2*dist)
-    xy = [[1, -y0], [1, y], [-1, y], [-1, -y0]]
-    ax.scatter([xpos], [ypos], marker=xy, s=size, c="#3a3a3a", alpha=1, edgecolors='none', zorder=5)
-
-
-def draw_boxa(dist, xpos, ypos, size, ax=None):
-    a = 1
-    xy = [[a, -a], [a, a], [-a, a], [-a, -a]]
-    ax.scatter([xpos], [ypos], marker=xy, s=size, c="#000000", alpha=0.2, edgecolors='none')
-    a = math.sqrt(dist)
-    xy = [[a, -a], [a, a], [-a, a], [-a, -a]]
-    ax.scatter([xpos], [ypos], marker=xy, s=dist*size, c="#000000", alpha=0.5, edgecolors='none')
+def draw_box(f, x, y, size, ax=None):
+    w = 1
+    h = 2
+    box_full = [[w, -h], [w, h], [-w, h], [-w, -h]]
+    ax.scatter([x], [y], marker=box_full, s=size, c="#cccccc", alpha=1, edgecolors='none', zorder=5)
+    t = h*(-1 + 2*f)
+    box_part = [[w, -h], [w, t], [-w, t], [-w, -h]]
+    ax.scatter([x], [y], marker=box_part, s=size, c="#3a3a3a", alpha=1, edgecolors='none', zorder=5)
 
 
 class SunPlotter:
@@ -74,15 +58,15 @@ class SunPlotter:
         zm = np.array([etaF(v) for v in self.sunSpatialPlot.nodesV])
 
         points = np.array([
-            (e.hourAngle(), e.declination()) for e in self.sunSpatialCalc.nodesE
+            (e.hourAngle()/angleHour, e.declination()/degree) for e in self.sunSpatialCalc.nodesE
         ])
-        snws = np.array(self.sunSpatialCalc.nodesW.copy())
-        if len(snws):
-            snws = np.fabs(snws)
-            snwsmax = np.max(snws)
-            snws /= snwsmax
-            # snws = 1 -snws
-            # snws = snws**2
+        values = np.array(self.sunSpatialCalc.nodesW.copy())
+        if showWeights and len(values) > 0:
+            values = np.fabs(values)
+            vMax = np.max(values)
+            values /= vMax
+        else:
+            showWeights = False
 
         levelsAll = np.arange(etaMin, etaMax + 1e-6, etaStep/10)
         ticksLocs = (0.2, etaStep)  # major, minor
@@ -101,12 +85,11 @@ class SunPlotter:
 
         axes.clabel(CS3, fmt=labelsFormat, fontsize=7, colors=colorAxes, manual=labelPositions)
 
-        if showWeights and len(snws) > 0:
-            for q, w in zip(points, snws):
-                draw_box(w, q[0]/angleHour, q[1]/degree, 2*32, ax=axes)
+        if showWeights:
+            for q, w in zip(points, values):
+                draw_box(w, q[0], q[1], 2*32, ax=axes)
         else:
-            axes.scatter(points[:, 0]/angleHour, points[:, 1]/degree, s=[15], c="#000000", alpha=0.5, edgecolors='none',
-                         zorder=5)
+            axes.scatter(points[:, 0], points[:, 1], s=[15], c="#000000", alpha=0.5, edgecolors='none', zorder=5)
 
         # frame
         axes.set_xlabel(r'Hour angle $\omega$, h')
@@ -116,7 +99,7 @@ class SunPlotter:
 
         axes.set_ylabel(r'Declination $\delta$, deg')
         axes.set_ylim(-28, 28)
-        if showWeights and len(snws) > 0:
+        if showWeights:
             axes.set_ylim(-30, 30)
         axes.yaxis.set_major_locator(MultipleLocator(10))
         axes.yaxis.set_minor_locator(MultipleLocator(2))
@@ -138,9 +121,6 @@ class SunPlotter:
         cbar = SunPlotter.addColorBar(figure, CS, 20, ticksLocs, ticksMajor, cbarTitle)
         cbar.add_lines(CS3)
 
-        # show
-        # plt.show()
-        # figure.savefig("plot.png", dpi=300)
         return figure
 
     def showHorizontal(self, etaF: typing.Callable, **kwargs):
@@ -156,19 +136,18 @@ class SunPlotter:
         ])
         azs = pointsPlot[:, 0]/degree
         els = pointsPlot[:, 1]/degree
-
         zm = np.array([etaF(v) for v in self.sunSpatialPlot.nodesV])
 
         points = np.array([
-            (h.azimuth(), h.elevation()) for h in self.sunSpatialCalc.nodesH
+            (h.azimuth()/degree, h.elevation()/degree) for h in self.sunSpatialCalc.nodesH
         ])
-        snws = np.array(self.sunSpatialCalc.nodesW.copy())
-        if len(snws):
-            snws = np.fabs(snws)
-            snwsmax = np.max(snws)
-            snws /= snwsmax
-            # snws = 1 -snws
-            # snws = snws**2
+        values = np.array(self.sunSpatialCalc.nodesW.copy())
+        if showWeights and len(values) > 0:
+            values = np.fabs(values)
+            vMax = np.max(values)
+            values /= vMax
+        else:
+            showWeights = False
 
         levelsAll = np.arange(etaMin, etaMax + 1e-6, etaStep/10)
         ticksLocs = (0.2, etaStep)  # major, minor
@@ -189,12 +168,11 @@ class SunPlotter:
 
         axes.clabel(CS3, fmt=labelsFormat, fontsize=7, colors=colorAxes, manual=labelPositions)
 
-        if showWeights and len(snws) > 0:
-            for q, w in zip(points, snws):
-                draw_box(w, q[0]/angleHour, q[1]/degree, 20, ax=axes)
+        if showWeights:
+            for q, w in zip(points, values):
+                draw_box(w, q[0], q[1], 2*32, ax=axes)
         else:
-            axes.scatter(points[:, 0]/degree, points[:, 1]/degree, s=[15], c="#000000", alpha=0.5, edgecolors='none',
-                         zorder=5)
+            axes.scatter(points[:, 0], points[:, 1], s=[15], c="#000000", alpha=0.5, edgecolors='none', zorder=5)
 
         # frame
         axes.set_xlabel(r'Azimuth $\gamma$, deg')
