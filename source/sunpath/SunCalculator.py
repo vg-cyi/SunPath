@@ -73,14 +73,3 @@ class SunCalculator:
         temp = np.clip(temp, -1., 1.)
         hourAngle = math.acos(temp)
         return hourAngle
-
-    # def findEfromER(self, e: PointEquatorial):
-    #     (omegaR, delta) = e
-    #     delta = e.declination()
-    #     omegaMax = self.findHourAngleMax(delta)
-    #     return (omegaR/(6*hour)*omegaMax, delta)
-    #
-    # def findERfromEquatorial(self, e: PointEquatorial):
-    #     delta = e.declination()
-    #     omegaMax = self.findHourAngleMax(delta)
-    #     return (e.hourAngle()/omegaMax*6*hour, delta)
