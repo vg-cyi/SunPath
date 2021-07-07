@@ -6,11 +6,7 @@ Interpolation and integration over sun path for applications in solar energy
 
 
 # Open
-"source/interpolation.ipynb"
 
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/vg-cyi/SunPath.git/master?filepath=source%2Finterpolation.ipynb)
-[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/vg-cyi/SunPath/blob/master/source/interpolation.ipynb)
+"source/interpolation.ipynb"&emsp;<a href="https://mybinder.org/v2/gh/vg-cyi/SunPath.git/master?filepath=source%2Finterpolation.ipynb"><img style="vertical-align:top" src="https://mybinder.org/badge_logo.svg"/>
 
-"."
-
-[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/vg-cyi/SunPath.git/master)
+"."&emsp;<a href="https://mybinder.org/v2/gh/vg-cyi/SunPath.git/master"><img style="vertical-align:top" src="https://mybinder.org/badge_logo.svg"/>
