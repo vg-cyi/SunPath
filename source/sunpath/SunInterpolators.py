@@ -9,6 +9,55 @@ import urllib.request
 from io import StringIO
 
 
+def readEtaRefCSV(filename: str) -> typing.Callable:
+    """
+    read simulation data from CSV
+    :param filename:
+    :return:
+    """
+    # read
+    if filename.startswith("http"):
+        response = urllib.request.urlopen(filename)
+        file = StringIO(response.read().decode('utf-8'))
+    else:
+        file = open(filename, "r")
+
+    reader = csv.reader(file, delimiter=',')  # quoting=csv.QUOTE_NONNUMERIC
+    data = []
+    for row in reader:
+        data += [row]
+    data = np.array(data)    
+
+    # convert
+    iAzimuth = np.where(data[0] == 'azimuth')[0][0]
+    iElevation = np.where(data[0] == 'elevation')[0][0]
+    iEfficiency = np.where(data[0] == 'efficiency')[0][0]
+    assert iAzimuth >= 0
+    assert iElevation >= 0
+    assert iEfficiency >= 0
+    
+    ans = []
+    for q in data[1:]:
+        azimuth = float(q[iAzimuth])
+        elevation = float(q[iElevation])
+        eta = float(q[iEfficiency])
+        ans.append([azimuth, elevation, eta])
+    ans = np.array(ans)
+
+    # interpolator
+    gammas = np.unique(ans[:, 0])*degree
+    alphas = np.unique(ans[:, 1])*degree
+    etas = np.reshape(ans[:, 2], (len(gammas), len(alphas)))
+
+    etaFuncTemp = interpolate.RectBivariateSpline(gammas, alphas, etas)
+
+    def etaFunc(v: mu.Vector) -> float:
+        h = SunCalculator.findHorizontalFromVector(v)
+        return etaFuncTemp(h.azimuth(), h.elevation())[0, 0]
+
+    return etaFunc
+
+    
 def readSolarPilot(filename: str) -> typing.Callable:
     """
     read simulation data from SolarPilot

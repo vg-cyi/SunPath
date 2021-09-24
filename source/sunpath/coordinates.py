@@ -40,7 +40,7 @@ class PointHorizontal(Point):
     def elevation(self) -> float:
         return self.y
 
-    def __repr__(self):
+    def __str__(self):
         return 'azimuth = {:.3f}d, elevation = {:.3f}d'.format(self.azimuth()/degree, self.elevation()/degree)
 
 
@@ -58,7 +58,7 @@ class PointEquatorial(Point):
     def declination(self) -> float:
         return self.y
 
-    def __repr__(self):
+    def __str__(self):
         return 'hour angle = {:.3f}d, declination = {:.3f}d'.format(self.hourAngle()/degree, self.declination()/degree)
 
 
@@ -78,7 +78,7 @@ class PointGeographic(Point):
     def longitude(self) -> float:
         return self.x
 
-    def __rer__(self):
+    def __str__(self):
         return 'latitude = {:.3f}d, longitude = {:.3f}d'.format(self.latitude()/degree, self.longitude()/degree)
 
 

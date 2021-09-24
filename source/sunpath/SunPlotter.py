@@ -28,7 +28,7 @@ class SunPlotter:
     labelPositionsE: list
     labelPositionsH: list
 
-    def __init__(self, sunSpatialPlot: SunSpatial, sunSpatialCalc: SunSpatial, levels=[0., 1., 0.1],
+    def __init__(self, sunSpatialPlot: SunSpatial, sunSpatialCalc: SunSpatial, levels=[0., 1., 0.1, 10], 
                  labelPositionsE=[], labelPositionsH=[]
                  ):
         self.sunSpatialPlot = sunSpatialPlot
@@ -38,12 +38,12 @@ class SunPlotter:
             [e.declination() for e in self.sunSpatialPlot.nodesE]
         )
         self.tris = triangulation.triangles
-        self.levels = levels
+        self.levels = levels # start, finish, step, substeps
         self.labelPositionsE = labelPositionsE
         self.labelPositionsH = labelPositionsH
 
     def showEquatorial(self, etaF: typing.Callable, **kwargs):
-        etaMin, etaMax, etaStep = kwargs.get('levels', self.levels)
+        etaMin, etaMax, etaStep, etaSubsteps = kwargs.get('levels', self.levels)
         colorMap = kwargs.get('cmap', colorMapL)
         labelsFormat = kwargs.get('labelsFormat', '%0.1f')
         labelPositions = kwargs.get('labelPositions', self.labelPositionsE)
@@ -68,8 +68,13 @@ class SunPlotter:
         else:
             showWeights = False
 
-        levelsAll = np.arange(etaMin, etaMax + 1e-6, etaStep/10)
-        ticksLocs = (0.2, etaStep)  # major, minor
+        etaSubstep = etaStep/etaSubsteps
+        iMin = math.floor(etaMin/etaSubstep)    
+        iMax = math.ceil(etaMax/etaSubstep)  
+        levelsAll = etaSubstep*np.arange(iMin, iMax + 1)
+        iMin = math.ceil(etaMin/etaStep)    
+        iMax = math.floor(etaMax/etaStep) 
+        levelsMajor = etaStep*np.arange(iMin, iMax + 1)
         ticksMajor = np.arange(etaMin, etaMax + 1e-6, etaStep)
 
         # figure
@@ -80,7 +85,7 @@ class SunPlotter:
         # parts
         CS = axes.tricontourf(xm, ym, zm, levels=levelsAll, cmap=colorMap, zorder=-2, linestyles='solid')
         CS2 = axes.tricontour(xm, ym, zm, levels=CS.levels[::1], colors='#00000020', linewidths=0.3, linestyles='solid')
-        CS3 = axes.tricontour(xm, ym, zm, levels=CS.levels[::10], colors='#00000050', linewidths=0.3,
+        CS3 = axes.tricontour(xm, ym, zm, levels=levelsMajor, colors='#00000050', linewidths=0.3,
                               linestyles='solid')
 
         axes.clabel(CS3, fmt=labelsFormat, fontsize=7, colors=colorAxes, manual=labelPositions)
@@ -118,13 +123,13 @@ class SunPlotter:
             axes.axhline(y=v, c=colorGrid, ls='--', lw=0.5, zorder=-1)
 
         # colorbar
-        cbar = SunPlotter.addColorBar(figure, CS, 20, ticksLocs, ticksMajor, cbarTitle)
+        cbar = SunPlotter.addColorBar(figure, CS, 20, (), levelsMajor, cbarTitle)
         cbar.add_lines(CS3)
 
         return figure
 
     def showHorizontal(self, etaF: typing.Callable, **kwargs):
-        etaMin, etaMax, etaStep = kwargs.get('levels', self.levels)
+        etaMin, etaMax, etaStep, etaSubsteps = kwargs.get('levels', self.levels)
         colorMap = kwargs.get('cmap', colorMapL)
         labelsFormat = kwargs.get('labelsFormat', '%0.1f')
         labelPositions = kwargs.get('labelPositions', self.labelPositionsH)
@@ -149,8 +154,13 @@ class SunPlotter:
         else:
             showWeights = False
 
-        levelsAll = np.arange(etaMin, etaMax + 1e-6, etaStep/10)
-        ticksLocs = (0.2, etaStep)  # major, minor
+        etaSubstep = etaStep/etaSubsteps
+        iMin = math.floor(etaMin/etaSubstep)    
+        iMax = math.ceil(etaMax/etaSubstep)  
+        levelsAll = etaSubstep*np.arange(iMin, iMax + 1)
+        iMin = math.ceil(etaMin/etaStep)    
+        iMax = math.floor(etaMax/etaStep) 
+        levelsMajor = etaStep*np.arange(iMin, iMax + 1)
         ticksMajor = np.arange(etaMin, etaMax + 1e-6, etaStep)
 
         # figure
@@ -163,7 +173,7 @@ class SunPlotter:
         CS = axes.tricontourf(azs, els, self.tris, zm, levels=levelsAll, cmap=colorMap, zorder=-2, linestyles='solid')
         CS2 = axes.tricontour(azs, els, self.tris, zm, levels=CS.levels[::1], colors='#00000020', linewidths=0.3,
                               linestyles='solid')
-        CS3 = axes.tricontour(azs, els, self.tris, zm, levels=CS.levels[::10], colors='#00000050', linewidths=0.3,
+        CS3 = axes.tricontour(azs, els, self.tris, zm, levels=levelsMajor, colors='#00000050', linewidths=0.3,
                               linestyles='solid')
 
         axes.clabel(CS3, fmt=labelsFormat, fontsize=7, colors=colorAxes, manual=labelPositions)
@@ -200,7 +210,7 @@ class SunPlotter:
             axes.axhline(y=v, c=colorD, ls='-', lw=0.25, zorder=-5)
 
         # colorbar
-        cbar = SunPlotter.addColorBar(figure, CS, 20, ticksLocs, ticksMajor, cbarTitle)
+        cbar = SunPlotter.addColorBar(figure, CS, 20, (), levelsMajor, cbarTitle)
         cbar.add_lines(CS3)
 
         return figure
@@ -213,7 +223,7 @@ class SunPlotter:
         # cbar.ax.set_ylabel('$\eta$', rotation=0)
 
         # cbar.ax.yaxis.set_major_locator(MultipleLocator(ticksLocs[0]))
-        cbar.ax.yaxis.set_minor_locator(MultipleLocator(ticksLocs[1]))
+        # cbar.ax.yaxis.set_minor_locator(MultipleLocator(ticksLocs[1]))
         cbar.set_ticks(ticksMajor)
 
         cbar.ax.tick_params(which='both', direction='in', top=True, right=True, width=0.5, color=colorAxes)

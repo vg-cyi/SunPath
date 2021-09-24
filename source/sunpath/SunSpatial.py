@@ -56,6 +56,9 @@ class SunSpatial:
         self.nodesE = ans
         self.nodesV = [sc.findVectorFromEquatorial(e) for e in self.nodesE]
         self.nodesH = [sc.findHorizontalFromVector(v) for v in self.nodesV]
+        # clean -0
+        for ae in self.nodesH:
+            if abs(ae.elevation()) < 1e-16: ae.y = 0.
 
     def info(self):
         n = len(self.nodesE)
