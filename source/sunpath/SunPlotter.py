@@ -69,16 +69,16 @@ class SunPlotter:
             showWeights = False
 
         etaSubstep = etaStep/etaSubsteps
-        iMin = math.floor(etaMin/etaSubstep)    
-        iMax = math.ceil(etaMax/etaSubstep)  
+        iMin = math.ceil(etaMin/etaSubstep)    
+        iMax = math.floor(etaMax/etaSubstep)  
         levelsAll = etaSubstep*np.arange(iMin, iMax + 1)
         iMin = math.ceil(etaMin/etaStep)    
         iMax = math.floor(etaMax/etaStep) 
         levelsMajor = etaStep*np.arange(iMin, iMax + 1)
-        ticksMajor = np.arange(etaMin, etaMax + 1e-6, etaStep)
 
         # figure
-        figure, axes = plt.subplots(constrained_layout=True)
+        #figure, axes = plt.subplots(constrained_layout=True)
+        figure, axes = plt.subplots()
         figure.set_size_inches(3.5, 1.5)
         figure.set_dpi(150)
 
@@ -123,9 +123,10 @@ class SunPlotter:
             axes.axhline(y=v, c=colorGrid, ls='--', lw=0.5, zorder=-1)
 
         # colorbar
-        cbar = SunPlotter.addColorBar(figure, CS, 20, (), levelsMajor, cbarTitle)
+        cbar = SunPlotter.addColorBar(figure, CS, 10, (), levelsMajor, cbarTitle)
         cbar.add_lines(CS3)
 
+        plt.tight_layout(rect=[0.03, 0.01, 1.03, 0.97], pad=0, h_pad=None, w_pad=None)
         return figure
 
     def showHorizontal(self, etaF: typing.Callable, **kwargs):
@@ -155,17 +156,17 @@ class SunPlotter:
             showWeights = False
 
         etaSubstep = etaStep/etaSubsteps
-        iMin = math.floor(etaMin/etaSubstep)    
-        iMax = math.ceil(etaMax/etaSubstep)  
+        iMin = math.ceil(etaMin/etaSubstep)    
+        iMax = math.floor(etaMax/etaSubstep)  
         levelsAll = etaSubstep*np.arange(iMin, iMax + 1)
         iMin = math.ceil(etaMin/etaStep)    
         iMax = math.floor(etaMax/etaStep) 
         levelsMajor = etaStep*np.arange(iMin, iMax + 1)
-        ticksMajor = np.arange(etaMin, etaMax + 1e-6, etaStep)
 
         # figure
-        figure, axes = plt.subplots(constrained_layout=True)
-
+        #figure, axes = plt.subplots(constrained_layout=True)
+        figure, axes = plt.subplots()
+        
         figure.set_size_inches(3.5, 1.5)
         figure.set_dpi(150)
 
@@ -208,11 +209,14 @@ class SunPlotter:
             axes.axvline(x=v, c=colorD, ls='-', lw=0.25, zorder=-5)
         for v in np.arange(0, 90.1, 30):
             axes.axhline(y=v, c=colorD, ls='-', lw=0.25, zorder=-5)
+        
 
+        
         # colorbar
-        cbar = SunPlotter.addColorBar(figure, CS, 20, (), levelsMajor, cbarTitle)
+        cbar = SunPlotter.addColorBar(figure, CS, 10, (), levelsMajor, cbarTitle)
         cbar.add_lines(CS3)
 
+        plt.tight_layout(rect=[0.053, 0.01, 1.03, 0.97], pad=0, h_pad=None, w_pad=None)
         return figure
 
     @staticmethod
@@ -222,7 +226,7 @@ class SunPlotter:
         # cbar.ax.set_xlabel(r'${\rm W}/{\rm m}^2$', labelpad=7)
         # cbar.ax.set_ylabel('$\eta$', rotation=0)
 
-        # cbar.ax.yaxis.set_major_locator(MultipleLocator(ticksLocs[0]))
+        #cbar.ax.yaxis.set_major_locator(MultipleLocator(ticksLocs[0]))
         # cbar.ax.yaxis.set_minor_locator(MultipleLocator(ticksLocs[1]))
         cbar.set_ticks(ticksMajor)
 

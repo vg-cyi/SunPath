@@ -158,7 +158,7 @@ class SunTemporal:
         self.pointsV = listV
         self.pointsW = listW
 
-    def checkAccuracy(self, etaF: typing.Callable, etaRefF: typing.Callable) -> list:
+    def checkAccuracy(self, etaF: typing.Callable, etaRefF: typing.Callable, verbose:bool = True) -> list:
         ansRMS = 0.
         ansM = 0.
         ansWM = 0.
@@ -175,9 +175,10 @@ class SunTemporal:
         ansRMS = math.sqrt(ansRMS/n)
         ansM /= n
         ansWM /= wTotal
-        print('delta_rms = {:.3f}%'.format(ansRMS*100))
-        print('delta_m = {:.3f}%'.format(ansM*100))  # mean
-        print('delta_wm = {:.3f}%'.format(ansWM*100))  # weighted mean
+        if verbose:
+            print('delta_rms = {:.3f}%'.format(ansRMS*100))
+            print('delta_m = {:.3f}%'.format(ansM*100))  # mean
+            print('delta_wm = {:.3f}%'.format(ansWM*100))  # weighted mean
         return [ansRMS, ansM, ansWM]
 
     def integrate(self, etaF: typing.Callable) -> float:
