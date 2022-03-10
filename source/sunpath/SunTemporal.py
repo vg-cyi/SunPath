@@ -23,8 +23,8 @@ def irradianceIneichen(s: mu.Vector) -> float:
 class SunTemporal:
     sc: SunCalculator
     tStep: timedelta
-    pointsV: list # sun positions
-    pointsW: list # irradiance
+    pointsV: list  # sun positions
+    pointsW: list  # irradiance
 
     def __init__(self, sc: SunCalculator):
         self.sc = sc
@@ -56,6 +56,75 @@ class SunTemporal:
             t += tStep
 
         self.pointsW = [irradiance(v) for v in self.pointsV]
+
+    @staticmethod
+    def compressTMY(filenameIn: str, filenameOut: str):
+        """
+        Compress 1-minute data to 1-hour data
+        the average irradiance for preceeding hour is found
+        """
+        fileIn = open(filenameIn, "r")
+        reader = csv.reader(file, delimiter=',')
+        fileOut = open(filenameOut, 'w')
+
+        header = next(reader)  # Source,Latitude,Longitude,Time Zone
+        fileOut.write(header.join(',') + '\n')
+
+        header = next(reader)  # TMY3,0.,0.,0.
+        fileOut.write(header.join(',') + '\n')
+
+        header = next(reader)  # Year,Month,Day,Hour,Minute,DNI
+        fileOut.write(header.join(',') + '\n')
+        nYear = -1
+        nMonth = -1
+        nDay = -1
+        nHour = -1
+        nMinute = -1
+        nSecond = -1
+        nDNI = -1
+        for i, h in enumerate(header):
+            if re.search('Year', h, re.IGNORECASE):
+                nYear = i
+            elif re.search('Month', h, re.IGNORECASE):
+                nMonth = i
+            elif re.search('Day', h, re.IGNORECASE):
+                nDay = i
+            elif re.search('Hour', h, re.IGNORECASE):
+                nHour = i
+            elif re.search('Minute', h, re.IGNORECASE):
+                nMinute = i
+            elif re.search('Second', h, re.IGNORECASE):
+                nSecond = i
+            elif re.search('(DNI|Beam)', h, re.IGNORECASE):
+                nDNI = i
+        assert nYear >= 0
+        assert nMonth >= 0
+        assert nDay >= 0
+        assert nHour >= 0
+        assert nDNI >= 0
+
+        hourPrev = -1
+        irradianceHour = 0.
+        irradianceN = 0
+        for row in reader:
+            year = int(row[nYear])
+            month = int(row[nMonth])
+            day = int(row[nDay])
+            hour = int(row[nHour])
+            irradiance = float(row[nDNI])
+
+            irradianceHour += irradiance
+            irradianceN += 1
+            if hourPrev != hour and irradianceN > 0:
+                row[nDNI] = irradianceHour/irradianceN
+                if nMinute > 0:
+                    row[nMinute] = 0
+                if nSecond > 0:
+                    row[nSecond] = 0
+                fileOut.write(row.join(',') + '\n')
+                hourPrev = hour
+                irradianceHour = 0.
+                irradianceN = 0
 
     def readTMY(self, filename: str, tMid: float = -0.5) -> None:
         """
@@ -103,6 +172,8 @@ class SunTemporal:
         nMonth = -1
         nDay = -1
         nHour = -1
+        nMinute = -1
+        nSecond = -1
         nDNI = -1
         for i, h in enumerate(header):
             if re.search('Year', h, re.IGNORECASE):
@@ -113,7 +184,11 @@ class SunTemporal:
                 nDay = i
             elif re.search('Hour', h, re.IGNORECASE):
                 nHour = i
-            elif re.search('DNI', h, re.IGNORECASE):
+            elif re.search('Minute', h, re.IGNORECASE):
+                nMinute = i
+            elif re.search('Second', h, re.IGNORECASE):
+                nSecond = i
+            elif re.search('(DNI|Beam)', h, re.IGNORECASE):
                 nDNI = i
         assert nYear >= 0
         assert nMonth >= 0
@@ -129,9 +204,17 @@ class SunTemporal:
             month = int(row[nMonth])
             day = int(row[nDay])
             hour = int(row[nHour])
+            if nMinute > 0:
+                minute = int(row[nMinute])
+            else:
+                minute = 0
+            if nSecond > 0:
+                second = int(row[nSecond])
+            else:
+                second = 0
             irradiance = float(row[nDNI])
 
-            t = datetime.datetime(year, month, day, hour, 0, 0, tzinfo=tz)
+            t = datetime.datetime(year, month, day, hour, minute, second, tzinfo=tz)
             listT += [t]
             listW += [irradiance]
 
@@ -152,13 +235,17 @@ class SunTemporal:
             wTotal += w
             if v.z < 0. and w > 0.:
                 wBelow += w
+
+        ts = self.tStep/datetime.timedelta(hours=1)
+        wBelow *= ts
+        wTotal *= ts
         print('annual insolation (all elevations): {:.3f} kWh/m2'.format(wTotal/1000))
         print('annual insolation (negative elevations): {:.3f} kWh/m2'.format(wBelow/1000))
 
         self.pointsV = listV
         self.pointsW = listW
 
-    def checkAccuracy(self, etaF: typing.Callable, etaRefF: typing.Callable, verbose:bool = True) -> list:
+    def checkAccuracy(self, etaF: typing.Callable, etaRefF: typing.Callable, verbose: bool = True) -> list:
         ansRMS = 0.
         ansM = 0.
         ansWM = 0.
